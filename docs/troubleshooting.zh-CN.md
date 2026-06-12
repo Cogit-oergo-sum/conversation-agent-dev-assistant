@@ -40,6 +40,44 @@ curl http://127.0.0.1:8080/config/runtime
 | `/config/runtime` 失败 | 客户服务端服务是否启动，配置路径是否正确。 |
 | 创建 AgentInstance 失败 | Gateway internal base URL、control token、ZEGO AppID/Secret 是否配置。 |
 
+## Level 2.5：本地 Cloudflare Tunnel Live Smoke
+
+在客户服务包根目录运行：
+
+```bash
+node examples/local-cloudflare-live-e2e/run.mjs --project ./ca3-project
+```
+
+如果使用 Named Tunnel 或固定 HTTPS URL：
+
+```bash
+node examples/local-cloudflare-live-e2e/run.mjs \
+  --project ./ca3-project \
+  --public-url https://ca3-live.example.com
+```
+
+如果 Web 前端部署在另一台机器：
+
+```bash
+node examples/local-cloudflare-live-e2e/run.mjs \
+  --project ./ca3-project \
+  --web-url https://web-preview.example.com \
+  --skip-web
+```
+
+常见问题：
+
+| 现象 | 检查 |
+| --- | --- |
+| `cloudflared` 不存在 | 安装 `cloudflared`，或使用 `--public-url` 指向 Named Tunnel。 |
+| Quick Tunnel 没有 URL | 检查网络和 Cloudflare 限流；稳定调试建议 Named Tunnel。 |
+| Quick Tunnel 断链后换了 URL | 默认 keeper 应重启 `cloudflared`、重写 `.conversationAgent.local-cloudflare-live-e2e.json`、重启托管 Gateway、更新客户服务端 `/config/gateway-public-url`，并调用 `/agent/register` 重新注册 ZEGO Agent。 |
+| tunnel URL 打不开 | 检查 local router 是否启动，`/health`、`/config/runtime`、`/voice/status` 是否能经 router 访问。 |
+| Web 资源不对 | 检查 `--web-url` 是否指向正确前端；Web 在不同机器时不要启动内置 Web。 |
+| Gateway 未收到 LLM callback | 检查临时 Gateway tunnel config 是否写入 HTTPS tunnel URL，ZEGO RegisterAgent 是否使用该 URL。 |
+
+Level 2.5 只说明本地 tunnel smoke 通过，不能替代云端 Level 3 release acceptance。
+
 ## Level 3：真实 ZEGO Live E2E
 
 真实 Live E2E 需要公网 HTTPS 回调地址和 ZEGO 控制台回调配置。
@@ -54,6 +92,8 @@ curl http://127.0.0.1:8080/config/runtime
 - Gateway 是否收到 LLM callback。
 - TTS 是否有供应商配置并能播放。
 - Web 是否显示字幕、mode、action、Agent 状态和延迟。
+
+云端 Level 3 必须从客户 tarball 部署验收，不从源码目录验收；localhost-only 或本地 tunnel-only 都不能作为 release acceptance。
 
 ## 汇报原则
 

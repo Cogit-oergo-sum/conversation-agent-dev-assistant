@@ -1,6 +1,6 @@
 ---
 name: conversation-agent-install
-description: Use when installing, starting, or validating Conversation Agent Service from a customer service artifact with an AI coding tool. Handles artifact retrieval, setup, check, start, status, doctor, and validation-level reporting without exposing secrets.
+description: Use when installing, starting, or validating Conversation Agent Service from a customer service artifact with an AI coding tool. Handles artifact retrieval, setup, check, start, status, doctor, optional local Cloudflare tunnel smoke, and validation-level reporting without exposing secrets.
 ---
 
 # Conversation Agent Install
@@ -48,12 +48,34 @@ Use this skill when the developer wants to install or start Conversation Agent S
    ./bin/conversation-agent start zego-service --project ./ca3-project --daemon
    ./bin/conversation-agent start web --project ./ca3-project --daemon
    ```
+9. If Level 2 passes and the developer wants a local real RTC smoke, use the standalone Cloudflare example:
+   ```bash
+   node examples/local-cloudflare-live-e2e/run.mjs --project ./ca3-project
+   ```
+   For a named tunnel or fixed HTTPS URL:
+   ```bash
+   node examples/local-cloudflare-live-e2e/run.mjs \
+     --project ./ca3-project \
+     --public-url https://ca3-live.example.com
+   ```
+   If the Web frontend is already deployed on another machine:
+   ```bash
+   node examples/local-cloudflare-live-e2e/run.mjs \
+     --project ./ca3-project \
+     --web-url https://web-preview.example.com \
+     --skip-web
+   ```
+   Quick Tunnel has a keeper by default. If `cloudflared` exits and a new URL is generated, the keeper refreshes temporary Gateway config, restarts the Gateway managed by the script, updates customer service public URL, and re-registers the ZEGO Agent. If Gateway or customer service is skipped because it runs elsewhere, tell the developer the external process must do the same update.
+   Do not ask the developer to paste cloudflared credentials or service secrets into chat. Let them authenticate or type secrets in the terminal.
 
 ## Validation Levels
 
 - Level 1: local Gateway is available.
 - Level 2: customer service and Web validation page are available.
+- Level 2.5: local Cloudflare Tunnel real RTC/ZEGO callback smoke works. Report the Tunnel URL and whether room join, microphone publishing, AgentInstance, ASR, LLM callback, TTS, subtitles, and mode/status/perf completed. State that this is not release acceptance.
 - Level 3: real ZEGO Live E2E works, including room join, microphone publishing, AgentInstance creation, ASR, LLM callback, TTS, subtitles, mode/action/status.
+
+Level 3 release acceptance still requires a cloud public HTTPS deployment from the customer tarball, not a source checkout or local tunnel.
 
 ## Final Response
 

@@ -15,9 +15,9 @@ Identify whether the developer already has:
 
 | Input | Example | If missing |
 | --- | --- | --- |
-| Customer service artifact | `conversation-agent-3.0.beta-sdk-xxx.tgz` | Ask for a download URL, private Release, customer repo, or local file path. |
+| Service artifact | `pulse-conversation-agent-gateway-v*.tgz` or `conversation-agent-3.0.beta-sdk-xxx.tgz` | Ask for a Pulse release URL, customer delivery URL, private Release, customer repo, or local file path. |
 | Customer project directory | `./ca3-project` | Default to `./ca3-project` next to the service package. |
-| Real ZEGO Live E2E requirement | yes / no | Default to Level 1 local Gateway validation first. |
+| Local tunnel or real ZEGO Live E2E requirement | Level 2.5 / Level 3 / no | Default to Level 1 local Gateway validation first. |
 
 Do not ask for plaintext secrets. Secret entry belongs in setup or login commands.
 
@@ -28,11 +28,13 @@ Choose one path:
 ### Local `.tgz`
 
 ```bash
-tar -xzf /path/to/conversation-agent-3.0.beta-sdk-*.tgz
-cd conversation-agent-3.0.beta-sdk
+tar -xzf /path/to/pulse-conversation-agent-gateway-v*.tgz
+cd pulse-conversation-agent-gateway-v*
 ```
 
-### Private GitHub Release
+For a private customer package, use the package name supplied by the delivery team, for example `conversation-agent-3.0.beta-sdk-*`.
+
+### GitHub Release
 
 Ask the developer to authenticate with GitHub CLI:
 
@@ -40,7 +42,7 @@ Ask the developer to authenticate with GitHub CLI:
 gh auth login
 ```
 
-Then download the artifact using the release URL or command provided by the delivery team.
+Then download the Pulse preview artifact or private customer artifact using the release URL or command provided by the maintainers.
 
 ### Controlled Download Link
 
@@ -108,7 +110,38 @@ http://127.0.0.1:5188
 
 Check customer service `/health` and `/config/runtime`.
 
-## 7. Optional Level 3: Real ZEGO Live E2E
+## 7. Optional Level 2.5: Local Cloudflare Tunnel Live Smoke
+
+After Level 2 passes, use the standalone customer package example when the developer wants to run a real ZEGO callback and browser RTC smoke from the local machine:
+
+```bash
+node examples/local-cloudflare-live-e2e/run.mjs --project ./ca3-project
+```
+
+This uses Cloudflare Quick Tunnel by default. If the developer already has a Named Tunnel or stable public HTTPS URL:
+
+```bash
+node examples/local-cloudflare-live-e2e/run.mjs \
+  --project ./ca3-project \
+  --public-url https://ca3-live.example.com
+```
+
+Quick Tunnel enables a keeper by default. If the tunnel disconnects or `cloudflared` exits, the keeper restarts the tunnel. When a new HTTPS URL is generated, it refreshes the temporary Gateway config, restarts the Gateway managed by the script, updates the customer service public URL, and re-registers the ZEGO Agent. If `--skip-gateway` or `--skip-customer-service` is used, remind the developer that the external process must perform the equivalent config update.
+
+If the Web frontend is deployed on another machine or already has an HTTPS preview URL:
+
+```bash
+node examples/local-cloudflare-live-e2e/run.mjs \
+  --project ./ca3-project \
+  --web-url https://web-preview.example.com \
+  --skip-web
+```
+
+A successful Level 2.5 report must include the Tunnel URL and whether room join, microphone publishing, AgentInstance, ASR, LLM callback, TTS, subtitles, and mode/status/perf completed.
+
+Level 2.5 is only a local tunnel smoke. It is not release acceptance and does not replace Level 3 cloud HTTPS Live E2E.
+
+## 8. Optional Level 3: Real ZEGO Live E2E
 
 Real Live E2E requires a ZEGO-reachable public HTTPS Gateway callback URL plus valid ZEGO AppID, ServerSecret, ASR/TTS settings, and event callback configuration.
 
@@ -122,12 +155,14 @@ Validate:
 - ZEGO TTS plays AI responses.
 - Web page shows subtitles, mode, action, Agent status, and latency metrics.
 
-## 8. Final Report Format
+Cloud Level 3 still must validate a deployment from the customer tarball, not a source checkout. Level 2.5 local tunnel evidence is development evidence only.
+
+## 9. Final Report Format
 
 Report:
 
 ```text
-Validation level: Level 1 / Level 2 / Level 3
+Validation level: Level 1 / Level 2 / Level 2.5 / Level 3
 Service package directory: ...
 Customer project directory: ...
 Commands run: ...

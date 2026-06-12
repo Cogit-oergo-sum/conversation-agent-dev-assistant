@@ -15,9 +15,9 @@
 
 | 信息 | 示例 | 如果没有 |
 | --- | --- | --- |
-| 客户服务制品 | `conversation-agent-3.0.beta-sdk-xxx.tgz` | 询问下载 URL、私有 Release、客户专属仓库，或本地路径。 |
+| 服务制品 | `pulse-conversation-agent-gateway-v*.tgz` 或 `conversation-agent-3.0.beta-sdk-xxx.tgz` | 询问 Pulse release URL、客户交付 URL、私有 Release、客户专属仓库，或本地路径。 |
 | 客户项目目录 | `./ca3-project` | 默认使用服务包旁边的 `./ca3-project`。 |
-| 是否需要真实 ZEGO Live E2E | 是 / 否 | 默认先完成 Level 1 本地 Gateway 验收。 |
+| 是否需要本地 tunnel 或真实 ZEGO Live E2E | Level 2.5 / Level 3 / 否 | 默认先完成 Level 1 本地 Gateway 验收。 |
 
 不要询问密钥明文。密钥输入应留给 `setup` 或登录命令。
 
@@ -28,11 +28,13 @@
 ### 本地已有 `.tgz`
 
 ```bash
-tar -xzf /path/to/conversation-agent-3.0.beta-sdk-*.tgz
-cd conversation-agent-3.0.beta-sdk
+tar -xzf /path/to/pulse-conversation-agent-gateway-v*.tgz
+cd pulse-conversation-agent-gateway-v*
 ```
 
-### 私有 GitHub Release
+如果是私有客户包，则使用交付方提供的包名，例如 `conversation-agent-3.0.beta-sdk-*`。
+
+### GitHub Release
 
 先让开发者完成 GitHub CLI 登录：
 
@@ -40,7 +42,7 @@ cd conversation-agent-3.0.beta-sdk
 gh auth login
 ```
 
-然后按交付方提供的 release 地址或命令下载制品。
+然后按维护方提供的 release 地址或命令下载 Pulse preview 制品或私有客户制品。
 
 ### 受控下载链接
 
@@ -108,7 +110,38 @@ http://127.0.0.1:5188
 
 检查客户服务端服务 `/health` 和 `/config/runtime` 是否可访问。
 
-## 7. 可选完成 Level 3：真实 ZEGO Live E2E
+## 7. 可选完成 Level 2.5：本地 Cloudflare Tunnel Live Smoke
+
+在 Level 2 通过后，如果开发者希望在本地跑通真实 ZEGO callback 和浏览器 RTC smoke，可以使用客户服务包内的独立 example：
+
+```bash
+node examples/local-cloudflare-live-e2e/run.mjs --project ./ca3-project
+```
+
+默认使用 Cloudflare Quick Tunnel。若开发者已有 Named Tunnel 或固定公网 HTTPS URL：
+
+```bash
+node examples/local-cloudflare-live-e2e/run.mjs \
+  --project ./ca3-project \
+  --public-url https://ca3-live.example.com
+```
+
+Quick Tunnel 默认启用 keeper。断链或 `cloudflared` 退出时，keeper 会重启 tunnel；如果生成了新的 HTTPS URL，会刷新临时 Gateway config、重启本脚本托管的 Gateway、更新客户服务端服务 public URL，并触发 ZEGO Agent 重新注册。若使用 `--skip-gateway` 或 `--skip-customer-service`，需要提醒开发者外部进程也要完成同等配置更新。
+
+如果 Web 前端部署在另一台机器或已有 HTTPS 预览地址：
+
+```bash
+node examples/local-cloudflare-live-e2e/run.mjs \
+  --project ./ca3-project \
+  --web-url https://web-preview.example.com \
+  --skip-web
+```
+
+Level 2.5 成功汇报必须包含 Tunnel URL，并逐项说明是否完成入房、麦克风发布、AgentInstance、ASR、LLM callback、TTS、字幕、mode/status/perf。
+
+Level 2.5 只是本地 tunnel smoke，不等同发布验收，不能替代 Level 3 云端公网 HTTPS Live E2E。
+
+## 8. 可选完成 Level 3：真实 ZEGO Live E2E
 
 真实 Live E2E 需要 ZEGO 可访问的公网 HTTPS Gateway 回调地址，以及正确的 ZEGO AppID、ServerSecret、ASR/TTS 配置和事件回调配置。
 
@@ -122,12 +155,14 @@ http://127.0.0.1:5188
 - ZEGO TTS 播放 AI 回复。
 - Web 展示字幕、mode、action、Agent 状态和延迟指标。
 
-## 8. 最终汇报格式
+云端 Level 3 仍要求从客户 tarball 部署验收，不从源码目录验收。Level 2.5 的本地 tunnel 证据只能作为开发调试证据。
+
+## 9. 最终汇报格式
 
 完成后向开发者汇报：
 
 ```text
-当前验收级别：Level 1 / Level 2 / Level 3
+当前验收级别：Level 1 / Level 2 / Level 2.5 / Level 3
 服务包目录：...
 客户项目目录：...
 已运行命令：...

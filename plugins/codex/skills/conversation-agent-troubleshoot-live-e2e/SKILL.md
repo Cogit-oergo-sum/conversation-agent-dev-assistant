@@ -40,6 +40,53 @@ Run:
 
 Check customer service `/health`, `/config/runtime`, Web page availability, Gateway internal base URL, and customer service to Gateway server-side auth.
 
+### Level 2.5: Local Cloudflare Tunnel Live Smoke
+
+Run the standalone example from the service package root:
+
+```bash
+node examples/local-cloudflare-live-e2e/run.mjs --project ./ca3-project
+```
+
+If Quick Tunnel fails to produce a URL, check `cloudflared` installation, network access, and Cloudflare rate limits. For stable debugging, ask the developer to set up a named tunnel and pass:
+
+```bash
+node examples/local-cloudflare-live-e2e/run.mjs \
+  --project ./ca3-project \
+  --public-url https://ca3-live.example.com
+```
+
+Quick Tunnel has a keeper by default. If `cloudflared` exits or reconnects with a new URL, verify that the runner:
+
+- restarted `cloudflared`
+- rewrote `.conversationAgent.local-cloudflare-live-e2e.json`
+- restarted the Gateway process managed by the runner
+- updated customer service `/config/gateway-public-url`
+- called customer service `/agent/register` so Gateway re-ran RegisterAgent / UpdateAgent
+
+If Gateway or customer service is external because `--skip-gateway` or `--skip-customer-service` is used, the runner cannot update that process. Ask the developer to run the equivalent external restart/config update and ZEGO Agent re-registration.
+
+If the Web frontend is deployed on another machine, route Web through that upstream instead of starting the packaged Web:
+
+```bash
+node examples/local-cloudflare-live-e2e/run.mjs \
+  --project ./ca3-project \
+  --web-url https://web-preview.example.com \
+  --skip-web
+```
+
+Check:
+
+- local router `/health`, `/config/runtime`, `/voice/status`, and `/`
+- tunnel URL loads the Web page
+- Gateway temporary tunnel config uses the tunnel HTTPS URL
+- customer service has a loopback/private `SDK_GATEWAY_INTERNAL_BASE_URL`
+- ZEGO RegisterAgent uses the tunnel HTTPS callback URL
+- browser microphone permission and publishing
+- AgentInstance creation, ASR, LLM callback, TTS, subtitles, mode/status/perf
+
+Level 2.5 is development evidence only. Do not report it as cloud release acceptance.
+
 ### Level 3: Real ZEGO Live E2E
 
 Check:
@@ -53,6 +100,8 @@ Check:
 - Gateway receives ZEGO LLM callbacks
 - TTS vendor settings are valid
 - Web displays subtitles, mode, action, Agent status, and latency
+
+For cloud Level 3, validate a deployment from the customer tarball through public HTTPS nginx / LB. Do not accept a source checkout, localhost-only run, or local tunnel as release acceptance.
 
 ## Output
 

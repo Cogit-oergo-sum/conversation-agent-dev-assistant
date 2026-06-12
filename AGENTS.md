@@ -2,6 +2,19 @@
 
 This repository guides AI coding tools that help developers install, understand, tune, and troubleshoot Conversation Agent Service.
 
+## Repository And Artifact Strategy
+
+Use the current three-repository strategy as the default mental model:
+
+| Surface | Role |
+| --- | --- |
+| `Cogit-oergo-sum/pulse-conversation-agent` | External preview repository. It is intended to become public-readable after review, but it distributes compiled artifacts only and is not an open-source source release. |
+| `Cogit-oergo-sum/conversation-agent-dev-assistant` | This repository. It helps AI coding tools install, validate, tune, and troubleshoot the Service. |
+| `Cogit-oergo-sum/OpenClaw-Voice-Gateway-Plugin` | Internal source and release-governance repository. Do not depend on it for developer installation unless the maintainer explicitly gives internal access. |
+| Customer `.tgz` artifacts | Customer-deployable immutable service packages. They are the thing developers actually run. |
+
+Do not blur these boundaries. This assistant can reference Pulse or a customer artifact as an input, but it must not ship runtime source, release-governance internals, real secrets, or customer-specific private workspaces.
+
 ## Working Agreements
 
 1. Keep the customer service artifact separate from this developer assistant repository.
@@ -15,7 +28,7 @@ This repository guides AI coding tools that help developers install, understand,
    - `./bin/conversation-agent status --project ./ca3-project`
    - `./bin/conversation-agent doctor --project ./ca3-project`
 6. Keep service package directory and customer project directory separate.
-7. Distinguish three validation levels: local Gateway, customer service plus Web page, and real ZEGO Live E2E.
+7. Distinguish four validation levels: Level 1 local Gateway, Level 2 customer service plus Web page, Level 2.5 local Cloudflare Tunnel Live Smoke, and Level 3 real cloud/public ZEGO Live E2E.
 8. For prompt or scene optimization, modify only customer-editable workspace files, knowledge files, action contracts, and integration examples. Do not modify proprietary runtime internals.
 
 ## Service Boundary
